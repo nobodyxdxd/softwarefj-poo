@@ -31,6 +31,16 @@ def registrar_cliente():
         )
         return
 
+    # NUEVO: Verificar si el cliente ya existe (mismo nombre Y correo)
+    for cliente_existente in clientes:
+        if cliente_existente.get_nombre().lower() == nombre.lower() and \
+           cliente_existente.get_correo().lower() == correo.lower():
+            messagebox.showerror(
+                "Error",
+                f"El cliente {nombre} ya está registrado"
+            )
+            return
+
     # Validar el cliente y capturar errores de validación
     try:
         cliente = Cliente(nombre, correo)
@@ -55,7 +65,18 @@ def registrar_cliente():
 
 
 def hacer_reserva():
-    """Crea y confirma una reserva para el último cliente registrado."""
+    """Crea y confirma una reserva para el cliente seleccionado."""
+    
+    # Obtener el cliente seleccionado del dropdown
+    seleccion = combo_clientes.get()
+    
+    if seleccion == "":
+        messagebox.showerror(
+            "Error",
+            "Debes seleccionar un cliente"
+        )
+        return
+    
     if len(clientes) == 0:
         messagebox.showerror(
             "Error",
@@ -63,8 +84,21 @@ def hacer_reserva():
         )
         return
 
-    cliente = clientes[-1]
-    reserva = Reserva(cliente, servicio_principal)
+    # Encontrar el cliente seleccionado
+    cliente_seleccionado = None
+    for cliente in clientes:
+        if cliente.mostrar_info() == seleccion:
+            cliente_seleccionado = cliente
+            break
+    
+    if cliente_seleccionado is None:
+        messagebox.showerror(
+            "Error",
+            "Cliente no encontrado"
+        )
+        return
+    
+    reserva = Reserva(cliente_seleccionado, servicio_principal)
 
     try:
         reserva.confirmar()
@@ -72,7 +106,7 @@ def hacer_reserva():
 
         mensaje_reserva = (
             f"✓ Reserva Confirmada\n\n"
-            f"Cliente: {cliente.get_nombre()}\n"
+            f"Cliente: {cliente_seleccionado.get_nombre()}\n"
             f"Servicio: {servicio_principal.nombre}\n"
             f"Estado: {reserva.estado}\n"
             f"Costo: ${servicio_principal.calcular_costo():,.0f}"
@@ -105,6 +139,21 @@ def actualizar_info_clientes():
         info_clientes.insert(tk.END, "No hay clientes registrados")
 
     info_clientes.config(state=tk.DISABLED)
+    
+    # NUEVO: Actualizar el dropdown de clientes
+    actualizar_dropdown_clientes()
+
+
+def actualizar_dropdown_clientes():
+    """Actualiza la lista de clientes en el dropdown."""
+    menu = dropdown_clientes['menu']
+    menu.delete(0, 'end')
+    
+    for cliente in clientes:
+        menu.add_command(
+            label=cliente.mostrar_info(),
+            command=lambda value=cliente.mostrar_info(): combo_clientes.set(value)
+        )
 
 
 def actualizar_info_reservas():
@@ -126,7 +175,7 @@ def actualizar_info_reservas():
 # Configuración de la ventana principal
 ventana = tk.Tk()
 ventana.title("Sistema de Reservas VIP")
-ventana.geometry("700x700")
+ventana.geometry("750x750")
 ventana.configure(bg="#f0f0f0")
 
 # Colores personalizados para mantener consistencia visual
@@ -144,11 +193,11 @@ frame_header.pack(fill=tk.X, padx=0, pady=0)
 titulo = tk.Label(
     frame_header,
     text="🏢 SISTEMA DE RESERVAS VIP",
-    font=("Arial", 20, "bold"),
+    font=("Arial", 14, "bold"),  # ✅ Cambié 20 por 14
     bg=COLOR_HEADER,
     fg=COLOR_TEXTO
 )
-titulo.pack(pady=20)
+titulo.pack(pady=10)  # ✅ Cambié 20 por 10 para menos espacio
 
 # Frame contenedor principal para secciones
 frame_main = tk.Frame(ventana, bg="#f0f0f0")
@@ -161,8 +210,8 @@ frame_registro = tk.LabelFrame(
     font=("Arial", 12, "bold"),
     bg="#ffffff",
     fg=COLOR_HEADER,
-    padx=15,
-    pady=15
+    padx=10,  # ✅ Cambié 15 por 10
+    pady=10   # ✅ Cambié 15 por 10
 )
 frame_registro.pack(fill=tk.X, pady=10)
 
@@ -211,7 +260,7 @@ boton_cliente = tk.Button(
     frame_registro,
     text="✓ REGISTRAR CLIENTE",
     command=registrar_cliente,
-    font=("Arial", 11, "bold"),
+    font=("Arial", 10, "bold"),
     bg=COLOR_BOTON,
     fg=COLOR_TEXTO,
     relief=tk.FLAT,
@@ -248,17 +297,57 @@ info_clientes = scrolledtext.ScrolledText(
 info_clientes.pack(fill=tk.BOTH, expand=True)
 info_clientes.config(state=tk.DISABLED)
 
+# Frame para seleccionar cliente y hacer reserva
+frame_reserva_cliente = tk.LabelFrame(
+    frame_main,
+    text="🎫 Realizar Reserva",
+    font=("Arial", 12, "bold"),
+    bg="#ffffff",
+    fg=COLOR_HEADER,
+    padx=10,  # ✅ Cambié 15 por 10
+    pady=10   # ✅ Cambié 15 por 10
+)
+frame_reserva_cliente.pack(fill=tk.X, pady=10)
+
+# Label para el selector de cliente
+label_cliente_reserva = tk.Label(
+    frame_reserva_cliente,
+    text="Selecciona un cliente:",
+    font=("Arial", 10, "bold"),
+    bg="#ffffff",
+    fg=COLOR_HEADER
+)
+label_cliente_reserva.pack(anchor=tk.W, pady=(0, 5))
+
+# Dropdown para seleccionar cliente
+combo_clientes = tk.StringVar()
+dropdown_clientes = tk.OptionMenu(
+    frame_reserva_cliente,
+    combo_clientes,
+    "Seleccionar cliente..."  # Valor inicial
+)
+dropdown_clientes.config(
+    font=("Arial", 10),
+    bg=COLOR_BOTON,
+    fg=COLOR_TEXTO,
+    activebackground=COLOR_BOTON_HOVER,
+    activeforeground=COLOR_TEXTO,
+    relief=tk.FLAT,
+    bd=0
+)
+dropdown_clientes.pack(fill=tk.X, pady=(0, 10))
+
 # Botón principal para confirmar la reserva del último cliente registrado
 boton_reserva = tk.Button(
     frame_main,
     text="🎫 REALIZAR RESERVA",
     command=hacer_reserva,
-    font=("Arial", 12, "bold"),
+    font=("Arial", 10, "bold"),
     bg=COLOR_SECUNDARIO,
     fg=COLOR_TEXTO,
     relief=tk.FLAT,
     padx=20,
-    pady=12,
+    pady=10,
     cursor="hand2",
     activebackground="#1a2c52",
     activeforeground=COLOR_TEXTO
