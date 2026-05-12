@@ -11,7 +11,7 @@ from logger_config import logger
 # Listas globales
 clientes = []
 reservas = []
-
+comentarios = []
 # Servicio activo
 servicio_actual = ReservaSala("Sala VIP", 50000, 1)
 
@@ -81,11 +81,21 @@ def actualizar_tabla_clientes():
 
 
 def actualizar_dropdown_clientes():
-    """Actualiza la lista de clientes en el dropdown."""
-    valores = [f"{c.get_cedula()} - {c.get_nombre()}" for c in clientes]
+
+    valores = [
+        f"{c.get_nombre()}"
+        for c in clientes
+    ]
+
     combo_clientes['values'] = valores
+
+    combo_clientes_comentario['values'] = valores
+
     if valores:
+
         combo_clientes.current(0)
+
+        combo_clientes_comentario.current(0)
 
 
 def buscar_cliente_por_cedula():
@@ -310,7 +320,36 @@ def actualizar_info_servicio():
         )
     )
 
+def agregar_comentario():
 
+    cliente = combo_clientes_comentario.get()
+    comentario = caja_comentario.get("1.0", tk.END).strip()
+
+    if not cliente or not comentario:
+
+        messagebox.showwarning(
+            "Advertencia",
+            "Debes seleccionar un cliente y escribir un comentario"
+        )
+
+        return
+
+    comentarios.append({
+        "cliente": cliente,
+        "comentario": comentario
+    })
+
+    lista_comentarios.insert(
+        tk.END,
+        f"{cliente}: {comentario}"
+    )
+
+    caja_comentario.delete("1.0", tk.END)
+
+    messagebox.showinfo(
+        "Éxito",
+        "Comentario agregado correctamente"
+    )
 # Configuración de la ventana principal
 ventana = tk.Tk()
 ventana.title("Sistema de Gestión de Reservas - Software FJ")
@@ -456,6 +495,81 @@ entrada_busqueda_cedula.pack(fill=tk.X, padx=10, pady=(0, 10))
 boton_buscar = tk.Button(frame_busqueda_clientes, text="🔍 BUSCAR", command=buscar_cliente_por_cedula, bg=COLOR_BOTON, fg=COLOR_TEXTO, font=("Arial", 10, "bold"), relief=tk.FLAT, padx=20, pady=10)
 boton_buscar.pack(fill=tk.X, padx=10, pady=(0, 10))
 
+# ============= PESTAÑA 4: COMENTARIOS =============
+
+frame_comentarios = ttk.Frame(notebook)
+
+notebook.add(
+    frame_comentarios,
+    text="💬 Comentarios"
+)
+
+tk.Label(
+    frame_comentarios,
+    text="Seleccionar cliente:",
+    font=("Arial", 10, "bold")
+).pack(anchor=tk.W, padx=10, pady=(10, 0))
+
+combo_clientes_comentario = ttk.Combobox(
+    frame_comentarios,
+    state="readonly",
+    width=40
+)
+
+combo_clientes_comentario.pack(
+    fill=tk.X,
+    padx=10,
+    pady=(0, 10)
+)
+
+tk.Label(
+    frame_comentarios,
+    text="Comentario:",
+    font=("Arial", 10, "bold")
+).pack(anchor=tk.W, padx=10)
+
+caja_comentario = tk.Text(
+    frame_comentarios,
+    height=5,
+    font=("Arial", 10)
+)
+
+caja_comentario.pack(
+    fill=tk.X,
+    padx=10,
+    pady=(0, 10)
+)
+
+boton_comentario = tk.Button(
+    frame_comentarios,
+    text="💬 Guardar comentario",
+    command=agregar_comentario,
+    bg=COLOR_BOTON,
+    fg=COLOR_TEXTO,
+    font=("Arial", 10, "bold"),
+    relief=tk.FLAT,
+    padx=20,
+    pady=10
+)
+
+boton_comentario.pack(
+    padx=10,
+    pady=(0, 10)
+)
+
+lista_comentarios = tk.Listbox(
+    frame_comentarios,
+    font=("Arial", 10),
+    height=10
+)
+
+lista_comentarios.pack(
+    fill=tk.BOTH,
+    expand=True,
+    padx=10,
+    pady=10
+)
+
 # ============= INFORMACIÓN DEL SERVICIO ACTIVO =============
 frame_servicio = tk.Frame(ventana, bg="#e8f4f8", relief=tk.FLAT, bd=1)
 frame_servicio.pack(fill=tk.X, padx=5, pady=5)
@@ -468,3 +582,4 @@ actualizar_info_servicio()
 
 # Inicia el bucle principal
 ventana.mainloop()
+
