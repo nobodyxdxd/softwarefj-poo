@@ -178,6 +178,48 @@ ventana.title("Sistema de Reservas VIP")
 ventana.geometry("750x750")
 ventana.configure(bg="#f0f0f0")
 
+# Scroll principal
+canvas = tk.Canvas(ventana, bg="#f0f0f0")
+scrollbar = tk.Scrollbar(
+    ventana,
+    orient="vertical",
+    command=canvas.yview
+)
+
+scrollable_frame = tk.Frame(canvas, bg="#f0f0f0")
+
+scrollable_frame.bind(
+    "<Configure>",
+    lambda e: canvas.configure(
+        scrollregion=canvas.bbox("all")
+    )
+)
+
+canvas_window = canvas.create_window(
+    (0, 0),
+    window=scrollable_frame,
+    anchor="nw",
+    width=750
+)
+
+def resize_frame(event):
+    canvas.itemconfig(canvas_window, width=event.width)
+
+canvas.bind("<Configure>", resize_frame)
+
+canvas.configure(yscrollcommand=scrollbar.set)
+
+canvas.pack(side="left", fill="both", expand=True)
+scrollbar.pack(side="right", fill="y")
+
+canvas.bind_all(
+    "<MouseWheel>",
+    lambda event: canvas.yview_scroll(
+        int(-1 * (event.delta / 120)),
+        "units"
+    )
+)
+
 # Colores personalizados para mantener consistencia visual
 COLOR_HEADER = "#1e3c72"
 COLOR_SECUNDARIO = "#2a5298"
@@ -187,7 +229,7 @@ COLOR_BOTON = "#00a8e8"
 COLOR_BOTON_HOVER = "#0088b8"
 
 # Frame superior con título principal
-frame_header = tk.Frame(ventana, bg=COLOR_HEADER)
+frame_header = tk.Frame(scrollable_frame, bg=COLOR_HEADER)
 frame_header.pack(fill=tk.X, padx=0, pady=0)
 
 titulo = tk.Label(
@@ -200,7 +242,7 @@ titulo = tk.Label(
 titulo.pack(pady=10)  # ✅ Cambié 20 por 10 para menos espacio
 
 # Frame contenedor principal para secciones
-frame_main = tk.Frame(ventana, bg="#f0f0f0")
+frame_main = tk.Frame(scrollable_frame, bg="#f0f0f0")
 frame_main.pack(fill=tk.BOTH, expand=True, padx=15, pady=15)
 
 # Sección de registro de clientes
