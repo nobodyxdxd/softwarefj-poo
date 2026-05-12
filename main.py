@@ -2,111 +2,112 @@ from cliente import Cliente
 from servicio import (
     ReservaSala,
     AlquilerEquipo,
-    AsesoriaEspecializada
+    AsesoriaEspecializada,
+    ServicioError
 )
 from reserva import Reserva
+from excepciones import ClienteError, ReservaError
 from logger_config import logger
 
 
-try:
+def ejecutar_demo():
+    clientes = []
+    servicios = []
+    reservas = []
 
-    cliente1 = Cliente("Juan", "juan@gmail.com")
+    print("=== DEMOSTRACIÓN DEL SISTEMA SOFTWARE FJ ===")
 
-except Exception as e:
+    try:
+        cliente1 = Cliente("Juan", "juan@gmail.com")
+        clientes.append(cliente1)
+        logger.info(f"Cliente registrado: {cliente1.mostrar_info()}")
+        print("Cliente registrado:", cliente1.mostrar_info())
+    except ClienteError as e:
+        logger.error(e)
+        print("Error de cliente:", e)
+    finally:
+        print("Fin de operación 1\n")
 
-    logger.error(e)
+    try:
+        Cliente("", "ana@gmail.com")
+    except ClienteError as e:
+        logger.error(e)
+        print("Cliente inválido detectado:", e)
 
-    print("Error:", e)
+    try:
+        Cliente("Ana", "correo_invalido")
+    except ClienteError as e:
+        logger.error(e)
+        print("Cliente inválido detectado:", e)
 
-else:
+    try:
+        sala = ReservaSala("Sala Premium", 50, 4)
+        servicios.append(sala)
+        logger.info(f"Servicio creado: {sala.mostrar_info()}")
+        print("Servicio creado:", sala.describir_servicio())
+    except ServicioError as e:
+        logger.error(e)
+        print("Error de servicio:", e)
 
-    print(cliente1.mostrar_info())
+    try:
+        ReservaSala("Sala Económica", -20, 3)
+    except ServicioError as e:
+        logger.error(e)
+        print("Servicio inválido detectado:", e)
 
-    print("Cliente registrado correctamente")
+    try:
+        equipo = AlquilerEquipo("PC Gamer", 100, 3)
+        servicios.append(equipo)
+        logger.info(f"Servicio creado: {equipo.mostrar_info()}")
+        print("Servicio creado:", equipo.describir_servicio())
+    except ServicioError as e:
+        logger.error(e)
+        print("Error de servicio:", e)
 
-finally:
+    try:
+        asesoria = AsesoriaEspecializada("Consultoría Python", 150, 2, "Carlos")
+        servicios.append(asesoria)
+        logger.info(f"Servicio creado: {asesoria.mostrar_info()}")
+        print("Servicio creado:", asesoria.describir_servicio())
+    except ServicioError as e:
+        logger.error(e)
+        print("Error de servicio:", e)
 
-    print("Proceso de cliente finalizado")
+    try:
+        reserva1 = Reserva(cliente1, sala)
+        reserva1.procesar()
+        reservas.append(reserva1)
+        print("Reserva realizada:", reserva1.mostrar_reserva())
+    except (ReservaError, ClienteError, ServicioError) as e:
+        logger.error(e)
+        print("Error en la reserva:", e)
 
+    try:
+        reserva1.confirmar()
+    except ReservaError as e:
+        logger.error(e)
+        print("Error detectado en doble confirmación:", e)
 
-print("\n--- SERVICIOS ---")
+    try:
+        Reserva(cliente1, None)
+    except ReservaError as e:
+        logger.error(e)
+        print("Reserva inválida detectada:", e)
 
+    try:
+        reserva1.cancelar()
+        print("Reserva cancelada exitosamente")
+        reserva1.cancelar()
+    except ReservaError as e:
+        logger.error(e)
+        print("Error detectado en doble cancelación:", e)
 
-sala = ReservaSala("Sala Premium", 50, 4)
-
-print(sala.describir_servicio())
-
-print("Costo:", sala.calcular_costo())
-
-print("Costo con impuesto:", sala.calcular_costo(impuesto=0.19))
-
-print("Costo con descuento:", sala.calcular_costo(descuento=20))
-
-
-equipo = AlquilerEquipo("PC Gamer", 100, 3)
-
-print(equipo.describir_servicio())
-
-print("Costo:", equipo.calcular_costo())
-
-
-asesoria = AsesoriaEspecializada(
-    "Consultoría Python",
-    150,
-    2,
-    "Carlos"
-)
-
-print(asesoria.describir_servicio())
-
-print("Costo:", asesoria.calcular_costo())
-
-
-print("\n--- RESERVA ---")
-
-
-reserva1 = Reserva(cliente1, sala)
-
-print(reserva1.mostrar_reserva())
-
-reserva1.confirmar()
-
-print(reserva1.mostrar_reserva())
-
-
-print("\n--- PRUEBAS DE ERRORES ---")
-
-
-try:
-
-    cliente_malo = Cliente("", "correo_malo")
-
-except Exception as e:
-
-    logger.error(e)
-
-    print("Error detectado:", e)
-
-
-try:
-
-    reserva1.confirmar()
-
-except Exception as e:
-
-    logger.error(e)
-
-    print("Error detectado:", e)
+    print("\n=== RESUMEN DE OPERACIONES ===")
+    print(f"Clientes válidos registrados: {len(clientes)}")
+    print(f"Servicios válidos creados: {len(servicios)}")
+    print(f"Reservas procesadas: {len(reservas)}")
+    logger.info(f"Resumen: {len(clientes)} clientes, {len(servicios)} servicios, {len(reservas)} reservas")
 
 
-try:
-
-    reserva1.cancelar()
-
-    reserva1.cancelar()
-
-except Exception as e:
-
-    logger.error(e)
-
-    print("Error detectado:", e)
+if __name__ == "__main__":
+    ejecutar_demo()

@@ -1,11 +1,14 @@
 import logging
 
+logger = logging.getLogger("SoftwareFJ")
+logger.setLevel(logging.INFO)
 
-logging.basicConfig(
-    filename="sistema.log",
-    level=logging.ERROR,
-    format="%(asctime)s - %(levelname)s - %(message)s"
-)
+if not logger.handlers:
+    formatter = logging.Formatter(
+        "%(asctime)s - %(levelname)s - %(message)s"
+    )
 
-
-logger = logging.getLogger()
+    file_handler = logging.FileHandler("sistema.log", encoding="utf-8")
+    file_handler.setLevel(logging.INFO)
+    file_handler.setFormatter(formatter)
+    logger.addHandler(file_handler)

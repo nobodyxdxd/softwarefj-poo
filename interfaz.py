@@ -1,437 +1,470 @@
 import tkinter as tk
-from tkinter import messagebox, scrolledtext
+from tkinter import messagebox, scrolledtext, ttk
+import re
 
 from cliente import Cliente
-from servicio import ReservaSala
+from servicio import ReservaSala, AlquilerEquipo, AsesoriaEspecializada
 from reserva import Reserva
-from excepciones import ClienteError, ReservaError
+from excepciones import ClienteError, ReservaError, ServicioError
+from logger_config import logger
 
-# Lista global de clientes y reservas registrados en la aplicación
+# Listas globales
 clientes = []
 reservas = []
 
-# Servicio principal fijo que se ofrece en la aplicación
-servicio_principal = ReservaSala(
-    "Sala VIP",
-    50000,
-    1
-)
+# Servicio activo
+servicio_actual = ReservaSala("Sala VIP", 50000, 1)
 
-
-def registrar_cliente():
-    """Registra un cliente utilizando los datos ingresados en la interfaz."""
-    nombre = entrada_nombre.get().strip()
-    correo = entrada_correo.get().strip()
-
-    # Validación básica: no deben quedar campos vacíos
-    if nombre == "" or correo == "":
-        messagebox.showwarning(
-            "Advertencia",
-            "Todos los campos son obligatorios"
-        )
-        return
-
-    # NUEVO: Verificar si el cliente ya existe (mismo nombre Y correo)
-    for cliente_existente in clientes:
-        if cliente_existente.get_nombre().lower() == nombre.lower():
-            messagebox.showerror(
-                "Error",
-                f"El cliente '{nombre}' ya está registrado"
-        )
-        return
-
-    # Validar el cliente y capturar errores de validación
-    try:
-        cliente = Cliente(nombre, correo)
-    except ClienteError as e:
-        messagebox.showerror(
-            "Error de validación",
-            str(e)
-        )
-        return
-
-    clientes.append(cliente)
-
-    messagebox.showinfo(
-        "✓ Éxito",
-        f"Cliente {nombre} registrado correctamente"
-    )
-
-    # Limpiar campos y actualizar el panel de clientes
-    entrada_nombre.delete(0, tk.END)
-    entrada_correo.delete(0, tk.END)
-    actualizar_info_clientes()
-
-
-def hacer_reserva():
-    """Crea y confirma una reserva para el cliente seleccionado."""
-    
-    # Obtener el cliente seleccionado del dropdown
-    seleccion = combo_clientes.get()
-    
-    if seleccion == "":
-        messagebox.showerror(
-            "Error",
-            "Debes seleccionar un cliente"
-        )
-        return
-    
-    if len(clientes) == 0:
-        messagebox.showerror(
-            "Error",
-            "No hay clientes registrados\n\nPrimero debes registrar un cliente"
-        )
-        return
-
-    # Encontrar el cliente seleccionado
-    cliente_seleccionado = None
-    for cliente in clientes:
-        if cliente.mostrar_info() == seleccion:
-            cliente_seleccionado = cliente
-            break
-    
-    if cliente_seleccionado is None:
-        messagebox.showerror(
-            "Error",
-            "Cliente no encontrado"
-        )
-        return
-    
-    reserva = Reserva(cliente_seleccionado, servicio_principal)
-
-    try:
-        reserva.confirmar()
-        reservas.append(reserva)
-
-        mensaje_reserva = (
-            f"✓ Reserva Confirmada\n\n"
-            f"Cliente: {cliente_seleccionado.get_nombre()}\n"
-            f"Servicio: {servicio_principal.nombre}\n"
-            f"Estado: {reserva.estado}\n"
-            f"Costo: ${servicio_principal.calcular_costo():,.0f}"
-        )
-
-        messagebox.showinfo(
-            "Reserva Exitosa",
-            mensaje_reserva
-        )
-        actualizar_info_reservas()
-
-    except ReservaError as e:
-        messagebox.showerror(
-            "Error en la Reserva",
-            str(e)
-        )
-
-
-def actualizar_info_clientes():
-    """Actualiza el panel de texto que muestra los clientes registrados."""
-    info_clientes.config(state=tk.NORMAL)
-    info_clientes.delete(1.0, tk.END)
-
-    if clientes:
-        info_clientes.insert(tk.END, "📋 CLIENTES REGISTRADOS\n")
-        info_clientes.insert(tk.END, "=" * 35 + "\n\n")
-        for i, cliente in enumerate(clientes, 1):
-            info_clientes.insert(tk.END, f"{i}. {cliente.mostrar_info()}\n")
-    else:
-        info_clientes.insert(tk.END, "No hay clientes registrados")
-
-    info_clientes.config(state=tk.DISABLED)
-    
-    # NUEVO: Actualizar el dropdown de clientes
-    actualizar_dropdown_clientes()
-
-
-def actualizar_dropdown_clientes():
-    """Actualiza la lista de clientes en el dropdown."""
-    menu = dropdown_clientes['menu']
-    menu.delete(0, 'end')
-    
-    for cliente in clientes:
-        menu.add_command(
-            label=cliente.mostrar_info(),
-            command=lambda value=cliente.mostrar_info(): combo_clientes.set(value)
-        )
-
-
-def actualizar_info_reservas():
-    """Actualiza el panel de texto que muestra las reservas confirmadas."""
-    info_reservas.config(state=tk.NORMAL)
-    info_reservas.delete(1.0, tk.END)
-
-    if reservas:
-        info_reservas.insert(tk.END, "🎫 RESERVAS CONFIRMADAS\n")
-        info_reservas.insert(tk.END, "=" * 35 + "\n\n")
-        for i, reserva in enumerate(reservas, 1):
-            info_reservas.insert(tk.END, f"{i}. {reserva.mostrar_reserva()}\n")
-    else:
-        info_reservas.insert(tk.END, "No hay reservas confirmadas")
-
-    info_reservas.config(state=tk.DISABLED)
-
-
-# Configuración de la ventana principal
-ventana = tk.Tk()
-ventana.title("Sistema de Reservas VIP")
-ventana.geometry("750x750")
-ventana.configure(bg="#f0f0f0")
-
-# Scroll principal
-canvas = tk.Canvas(ventana, bg="#f0f0f0")
-scrollbar = tk.Scrollbar(
-    ventana,
-    orient="vertical",
-    command=canvas.yview
-)
-
-scrollable_frame = tk.Frame(canvas, bg="#f0f0f0")
-
-scrollable_frame.bind(
-    "<Configure>",
-    lambda e: canvas.configure(
-        scrollregion=canvas.bbox("all")
-    )
-)
-
-canvas_window = canvas.create_window(
-    (0, 0),
-    window=scrollable_frame,
-    anchor="nw",
-    width=750
-)
-
-def resize_frame(event):
-    canvas.itemconfig(canvas_window, width=event.width)
-
-canvas.bind("<Configure>", resize_frame)
-
-canvas.configure(yscrollcommand=scrollbar.set)
-
-canvas.pack(side="left", fill="both", expand=True)
-scrollbar.pack(side="right", fill="y")
-
-canvas.bind_all(
-    "<MouseWheel>",
-    lambda event: canvas.yview_scroll(
-        int(-1 * (event.delta / 120)),
-        "units"
-    )
-)
-
-# Colores personalizados para mantener consistencia visual
+# Colores
 COLOR_HEADER = "#1e3c72"
 COLOR_SECUNDARIO = "#2a5298"
 COLOR_ACENTO = "#00d4ff"
 COLOR_TEXTO = "#ffffff"
 COLOR_BOTON = "#00a8e8"
 COLOR_BOTON_HOVER = "#0088b8"
+COLOR_EXITO = "#28a745"
+COLOR_ERROR = "#dc3545"
 
-# Frame superior con título principal
-frame_header = tk.Frame(scrollable_frame, bg=COLOR_HEADER)
-frame_header.pack(fill=tk.X, padx=0, pady=0)
 
-titulo = tk.Label(
-    frame_header,
-    text="🏢 SISTEMA DE RESERVAS VIP",
-    font=("Arial", 14, "bold"),  # ✅ Cambié 20 por 14
-    bg=COLOR_HEADER,
-    fg=COLOR_TEXTO
-)
-titulo.pack(pady=10)  # ✅ Cambié 20 por 10 para menos espacio
+def registrar_cliente():
+    """Registra un cliente con cédula, nombre y correo."""
+    cedula = entrada_cedula.get().strip()
+    nombre = entrada_nombre.get().strip()
+    correo = entrada_correo.get().strip()
 
-# Frame contenedor principal para secciones
-frame_main = tk.Frame(scrollable_frame, bg="#f0f0f0")
-frame_main.pack(fill=tk.BOTH, expand=True, padx=15, pady=15)
+    if not cedula or not nombre or not correo:
+        messagebox.showwarning("Advertencia", "Todos los campos son obligatorios")
+        return
 
-# Sección de registro de clientes
-frame_registro = tk.LabelFrame(
-    frame_main,
-    text="📝 Registrar Cliente",
-    font=("Arial", 12, "bold"),
-    bg="#ffffff",
-    fg=COLOR_HEADER,
-    padx=10,  # ✅ Cambié 15 por 10
-    pady=10   # ✅ Cambié 15 por 10
-)
-frame_registro.pack(fill=tk.X, pady=10)
+    if not cedula.isdigit():
+        messagebox.showerror("Error", "La cédula solo debe contener números")
+        return
 
-# Campo de entrada para el nombre del cliente
-label_nombre = tk.Label(
-    frame_registro,
-    text="Nombre completo:",
-    font=("Arial", 10, "bold"),
-    bg="#ffffff",
-    fg=COLOR_HEADER
-)
-label_nombre.pack(anchor=tk.W)
+    if not re.match(r"^[a-zA-ZáéíóúÁÉÍÓÚ ]+$", nombre):
+        messagebox.showerror("Error", "El nombre solo debe contener letras y espacios")
+        return
 
-entrada_nombre = tk.Entry(
-    frame_registro,
-    font=("Arial", 10),
-    width=40,
-    relief=tk.FLAT,
-    bd=2
-)
-entrada_nombre.pack(fill=tk.X, pady=(5, 10))
-entrada_nombre.config(highlightbackground=COLOR_ACENTO, highlightthickness=1)
+    for cliente in clientes:
+        if cliente.get_cedula() == cedula:
+            messagebox.showerror("Error", f"La cédula {cedula} ya está registrada")
+            return
 
-# Campo de entrada para el correo electrónico del cliente
-label_correo = tk.Label(
-    frame_registro,
-    text="Correo electrónico:",
-    font=("Arial", 10, "bold"),
-    bg="#ffffff",
-    fg=COLOR_HEADER
-)
-label_correo.pack(anchor=tk.W)
+    try:
+        cliente = Cliente(nombre, correo, cedula)
+        clientes.append(cliente)
+        logger.info(f"Cliente registrado: {cliente.mostrar_info()}")
+        messagebox.showinfo("Éxito", f"Cliente {nombre} registrado correctamente")
 
-entrada_correo = tk.Entry(
-    frame_registro,
-    font=("Arial", 10),
-    width=40,
-    relief=tk.FLAT,
-    bd=2
-)
-entrada_correo.pack(fill=tk.X, pady=(5, 15))
-entrada_correo.config(highlightbackground=COLOR_ACENTO, highlightthickness=1)
+        entrada_cedula.delete(0, tk.END)
+        entrada_nombre.delete(0, tk.END)
+        entrada_correo.delete(0, tk.END)
+        actualizar_tabla_clientes()
+    except ClienteError as e:
+        logger.error(e)
+        messagebox.showerror("Error de validación", str(e))
 
-# Botón de acción para registrar cliente
-boton_cliente = tk.Button(
-    frame_registro,
-    text="✓ REGISTRAR CLIENTE",
-    command=registrar_cliente,
-    font=("Arial", 10, "bold"),
-    bg=COLOR_BOTON,
-    fg=COLOR_TEXTO,
-    relief=tk.FLAT,
-    padx=20,
-    pady=10,
-    cursor="hand2",
-    activebackground=COLOR_BOTON_HOVER,
-    activeforeground=COLOR_TEXTO
-)
-boton_cliente.pack(fill=tk.X)
 
-# Panel que muestra los clientes registrados hasta el momento
-frame_info_clientes = tk.LabelFrame(
-    frame_main,
-    text="👥 Clientes Registrados",
-    font=("Arial", 11, "bold"),
-    bg="#ffffff",
-    fg=COLOR_HEADER,
-    padx=10,
-    pady=10
-)
-frame_info_clientes.pack(fill=tk.BOTH, expand=True, pady=10)
+def actualizar_tabla_clientes():
+    """Actualiza la tabla de clientes con estilo similar a Excel."""
+    for item in tabla_clientes.get_children():
+        tabla_clientes.delete(item)
 
-info_clientes = scrolledtext.ScrolledText(
-    frame_info_clientes,
-    font=("Arial", 10),
-    height=10,
-    width=65,
-    bg="#f9f9f9",
-    fg=COLOR_HEADER,
-    relief=tk.FLAT,
-    bd=1
-)
-info_clientes.pack(fill=tk.BOTH, expand=True)
-info_clientes.config(state=tk.DISABLED)
+    for cliente in clientes:
+        tabla_clientes.insert("", "end", values=(
+            cliente.get_id(),
+            cliente.get_cedula(),
+            cliente.get_nombre(),
+            cliente.get_correo()
+        ))
 
-# Frame para seleccionar cliente y hacer reserva
-frame_reserva_cliente = tk.LabelFrame(
-    frame_main,
-    text="🎫 Realizar Reserva",
-    font=("Arial", 12, "bold"),
-    bg="#ffffff",
-    fg=COLOR_HEADER,
-    padx=10,  # ✅ Cambié 15 por 10
-    pady=10   # ✅ Cambié 15 por 10
-)
-frame_reserva_cliente.pack(fill=tk.X, pady=10)
+    actualizar_dropdown_clientes()
 
-# Label para el selector de cliente
-label_cliente_reserva = tk.Label(
-    frame_reserva_cliente,
-    text="Selecciona un cliente:",
-    font=("Arial", 10, "bold"),
-    bg="#ffffff",
-    fg=COLOR_HEADER
-)
-label_cliente_reserva.pack(anchor=tk.W, pady=(0, 5))
 
-# Dropdown para seleccionar cliente
-combo_clientes = tk.StringVar()
-dropdown_clientes = tk.OptionMenu(
-    frame_reserva_cliente,
-    combo_clientes,
-    "Seleccionar cliente..."  # Valor inicial
-)
-dropdown_clientes.config(
-    font=("Arial", 10),
-    bg=COLOR_BOTON,
-    fg=COLOR_TEXTO,
-    activebackground=COLOR_BOTON_HOVER,
-    activeforeground=COLOR_TEXTO,
-    relief=tk.FLAT,
-    bd=0
-)
-dropdown_clientes.pack(fill=tk.X, pady=(0, 10))
+def actualizar_dropdown_clientes():
+    """Actualiza la lista de clientes en el dropdown."""
+    valores = [f"{c.get_cedula()} - {c.get_nombre()}" for c in clientes]
+    combo_clientes['values'] = valores
+    if valores:
+        combo_clientes.current(0)
 
-# Botón principal para confirmar la reserva del último cliente registrado
-boton_reserva = tk.Button(
-    frame_main,
-    text="🎫 REALIZAR RESERVA",
-    command=hacer_reserva,
-    font=("Arial", 10, "bold"),
-    bg=COLOR_SECUNDARIO,
-    fg=COLOR_TEXTO,
-    relief=tk.FLAT,
-    padx=20,
-    pady=10,
-    cursor="hand2",
-    activebackground="#1a2c52",
-    activeforeground=COLOR_TEXTO
-)
-boton_reserva.pack(fill=tk.X, pady=10)
 
-# Panel que muestra las reservas confirmadas hasta ahora
-frame_info_reservas = tk.LabelFrame(
-    frame_main,
-    text="🎫 Reservas Confirmadas",
-    font=("Arial", 11, "bold"),
-    bg="#ffffff",
-    fg=COLOR_HEADER,
-    padx=10,
-    pady=10
-)
-frame_info_reservas.pack(fill=tk.BOTH, expand=True, pady=10)
+def buscar_cliente_por_cedula():
+    """Busca un cliente por cédula."""
+    cedula_busqueda = entrada_busqueda_cedula.get().strip()
 
-info_reservas = scrolledtext.ScrolledText(
-    frame_info_reservas,
-    font=("Arial", 10),
-    height=10,
-    width=65,
-    bg="#f9f9f9",
-    fg=COLOR_HEADER,
-    relief=tk.FLAT,
-    bd=1
-)
-info_reservas.pack(fill=tk.BOTH, expand=True)
-info_reservas.config(state=tk.DISABLED)
+    if not cedula_busqueda:
+        messagebox.showwarning("Advertencia", "Ingresa una cédula para buscar")
+        return
 
-# Panel inferior con detalles del servicio disponible
-frame_servicio = tk.Frame(frame_main, bg="#e8f4f8", relief=tk.FLAT, bd=1, padx=10, pady=10)
-frame_servicio.pack(fill=tk.X, pady=10)
+    cliente_encontrado = None
+    for cliente in clientes:
+        if cliente.get_cedula() == cedula_busqueda:
+            cliente_encontrado = cliente
+            break
 
-info_servicio = tk.Label(
-    frame_servicio,
-    text=f"🏢 Servicio: {servicio_principal.nombre} | 💰 Precio: ${servicio_principal.precio_base:,.0f} por hora | ⏱️ Duración: {servicio_principal.horas} hora",
-    font=("Arial", 9),
-    bg="#e8f4f8",
-    fg=COLOR_SECUNDARIO
-)
-info_servicio.pack()
+    if not cliente_encontrado:
+        messagebox.showinfo("Búsqueda", f"No se encontró cliente con cédula {cedula_busqueda}")
+        return
 
-# Inicia el bucle principal de la interfaz gráfica
+    reservas_cliente = [r for r in reservas if r.cliente.get_cedula() == cedula_busqueda]
+
+    info_resultado = f"Cliente encontrado:\n{cliente_encontrado.mostrar_info()}\n\n"
+    info_resultado += f"Reservas ({len(reservas_cliente)}):\n"
+
+    if reservas_cliente:
+        for i, reserva in enumerate(reservas_cliente, 1):
+            info_resultado += f"{i}. {reserva.mostrar_reserva()}\n"
+    else:
+        info_resultado += "Sin reservas registradas"
+
+    messagebox.showinfo("Resultado de búsqueda", info_resultado)
+
+
+def hacer_reserva():
+    """Crea y confirma una reserva."""
+    seleccion = combo_clientes.get()
+
+    if not seleccion:
+        messagebox.showerror("Error", "Debes seleccionar un cliente")
+        return
+
+    if len(clientes) == 0:
+        messagebox.showerror("Error", "No hay clientes registrados")
+        return
+
+    cliente_seleccionado = None
+    for cliente in clientes:
+        if f"{cliente.get_cedula()} - {cliente.get_nombre()}" == seleccion:
+            cliente_seleccionado = cliente
+            break
+
+    if not cliente_seleccionado:
+        messagebox.showerror("Error", "Cliente no encontrado")
+        return
+
+    try:
+        reserva = Reserva(cliente_seleccionado, servicio_actual)
+        reserva.confirmar()
+        reservas.append(reserva)
+
+        costo = reserva.obtener_costo_total()
+        mensaje = f"✓ Reserva Confirmada\n\n" \
+                  f"Cliente: {cliente_seleccionado.get_nombre()}\n" \
+                  f"Cédula: {cliente_seleccionado.get_cedula()}\n" \
+                  f"Servicio: {servicio_actual.nombre}\n" \
+                  f"Costo: ${costo:,.0f}"
+
+        messagebox.showinfo("Reserva Exitosa", mensaje)
+        actualizar_tabla_reservas()
+        logger.info(f"Reserva realizada: {reserva.mostrar_reserva()}")
+    except (ReservaError, ClienteError, ServicioError) as e:
+        logger.error(e)
+        messagebox.showerror("Error en la Reserva", str(e))
+
+
+def actualizar_tabla_reservas():
+    """Actualiza la tabla de reservas."""
+    for item in tabla_reservas.get_children():
+        tabla_reservas.delete(item)
+
+    for i, reserva in enumerate(reservas, 1):
+        tabla_reservas.insert("", "end", values=(
+            i,
+            reserva.cliente.get_cedula(),
+            reserva.cliente.get_nombre(),
+            reserva.servicio.nombre,
+            getattr(reserva.servicio, "horas", None) or getattr(reserva.servicio, "dias", None),
+            f"${reserva.obtener_costo_total():,.0f}",
+            reserva.estado
+        ))
+
+
+def eliminar_reserva_seleccionada():
+    """Elimina la reserva seleccionada de la tabla."""
+    seleccion = tabla_reservas.selection()
+
+    if not seleccion:
+        messagebox.showwarning("Advertencia", "Selecciona una reserva para eliminar")
+        return
+
+    indice = tabla_reservas.index(seleccion[0])
+
+    if indice < len(reservas):
+        reserva = reservas.pop(indice)
+        logger.info(f"Reserva eliminada: {reserva.mostrar_reserva()}")
+        messagebox.showinfo("Éxito", "Reserva eliminada correctamente")
+        actualizar_tabla_reservas()
+
+
+def editar_reserva_seleccionada():
+    """Abre un diálogo para editar el estado de una reserva."""
+    seleccion = tabla_reservas.selection()
+
+    if not seleccion:
+        messagebox.showwarning("Advertencia", "Selecciona una reserva para editar")
+        return
+
+    indice = tabla_reservas.index(seleccion[0])
+
+    if indice < len(reservas):
+        reserva = reservas[indice]
+        ventana_edicion = tk.Toplevel(ventana)
+        ventana_edicion.title("Editar Estado de Reserva")
+        ventana_edicion.geometry("400x200")
+        ventana_edicion.configure(bg="#f0f0f0")
+
+        tk.Label(ventana_edicion, text="Estado Actual:", font=("Arial", 10, "bold"), bg="#f0f0f0").pack(pady=5)
+        tk.Label(ventana_edicion, text=reserva.estado, font=("Arial", 10), bg="#e8f4f8", relief=tk.FLAT, pady=5).pack(fill=tk.X, padx=20)
+
+        tk.Label(ventana_edicion, text="Nuevo Estado:", font=("Arial", 10, "bold"), bg="#f0f0f0").pack(pady=5)
+
+        variable_estado = tk.StringVar(value=reserva.estado)
+        combo_estado = ttk.Combobox(ventana_edicion, textvariable=variable_estado, values=["Pendiente", "Confirmada", "Cancelada"], state="readonly", width=30)
+        combo_estado.pack(padx=20, pady=5)
+
+        def guardar_edicion():
+            nuevo_estado = variable_estado.get()
+            try:
+                reserva.editar_estado(nuevo_estado)
+                messagebox.showinfo("Éxito", f"Reserva actualizada a estado: {nuevo_estado}")
+                ventana_edicion.destroy()
+                actualizar_tabla_reservas()
+            except ReservaError as e:
+                messagebox.showerror("Error", str(e))
+
+        tk.Button(ventana_edicion, text="Guardar", command=guardar_edicion, bg=COLOR_EXITO, fg=COLOR_TEXTO, font=("Arial", 10, "bold"), relief=tk.FLAT, padx=20, pady=10).pack(pady=10)
+
+
+def actualizar_formulario_servicio():
+    """Actualiza el formulario según el tipo de servicio seleccionado."""
+    tipo = servicio_tipo.get()
+    if tipo == "Asesoría Especializada":
+        label_especialista.pack(anchor=tk.W)
+        entrada_especialista.pack(fill=tk.X, pady=(5, 10))
+        label_duracion_servicio.config(text="Duración (horas):")
+        entrada_nombre_servicio.delete(0, tk.END)
+        entrada_nombre_servicio.insert(0, "Consultoría Python")
+        entrada_duracion_servicio.delete(0, tk.END)
+        entrada_duracion_servicio.insert(0, "2")
+        entrada_especialista.delete(0, tk.END)
+        entrada_especialista.insert(0, "Carlos")
+    else:
+        label_especialista.pack_forget()
+        entrada_especialista.pack_forget()
+
+        if tipo == "Reserva Sala":
+            label_duracion_servicio.config(text="Duración (horas):")
+            entrada_nombre_servicio.delete(0, tk.END)
+            entrada_nombre_servicio.insert(0, "Sala VIP")
+            entrada_duracion_servicio.delete(0, tk.END)
+            entrada_duracion_servicio.insert(0, "1")
+        else:
+            label_duracion_servicio.config(text="Duración (días):")
+            entrada_nombre_servicio.delete(0, tk.END)
+            entrada_nombre_servicio.insert(0, "PC Gamer")
+            entrada_duracion_servicio.delete(0, tk.END)
+            entrada_duracion_servicio.insert(0, "3")
+
+
+def crear_servicio():
+    """Crea un servicio activo dinámico."""
+    tipo = servicio_tipo.get()
+    nombre = entrada_nombre_servicio.get().strip()
+    precio_texto = entrada_precio_servicio.get().strip()
+    duracion_texto = entrada_duracion_servicio.get().strip()
+    especialista = entrada_especialista.get().strip()
+
+    if not nombre or not precio_texto or not duracion_texto:
+        messagebox.showerror("Error", "Todos los campos del servicio son obligatorios")
+        return
+
+    try:
+        precio = float(precio_texto)
+        duracion = int(duracion_texto)
+
+        global servicio_actual
+
+        if tipo == "Reserva Sala":
+            servicio_actual = ReservaSala(nombre, precio, duracion)
+        elif tipo == "Alquiler Equipo":
+            servicio_actual = AlquilerEquipo(nombre, precio, duracion)
+        else:
+            if not especialista:
+                raise ValueError("El especialista es obligatorio para la asesoría")
+            servicio_actual = AsesoriaEspecializada(nombre, precio, duracion, especialista)
+
+        actualizar_info_servicio()
+        messagebox.showinfo("Servicio activo", f"Servicio actualizado: {servicio_actual.describir_servicio()}")
+    except Exception as e:
+        logger.error(e)
+        messagebox.showerror("Error al crear servicio", str(e))
+
+
+def actualizar_info_servicio():
+    """Actualiza la información del servicio activo."""
+    info_servicio.config(
+        text=(
+            f"🏢 Servicio: {servicio_actual.nombre} | "
+            f"💰 Precio: ${servicio_actual.precio_base:,.0f} | "
+            f"Detalle: {servicio_actual.describir_servicio()}"
+        )
+    )
+
+
+# Configuración de la ventana principal
+ventana = tk.Tk()
+ventana.title("Sistema de Gestión de Reservas - Software FJ")
+ventana.geometry("1200x800")
+ventana.configure(bg="#f0f0f0")
+
+# Notebook para pestañas
+notebook = ttk.Notebook(ventana)
+notebook.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
+
+# ============= PESTAÑA 1: REGISTRO DE CLIENTES =============
+frame_clientes = ttk.Frame(notebook)
+notebook.add(frame_clientes, text="📝 Registro de Clientes")
+
+frame_entrada_clientes = tk.LabelFrame(frame_clientes, text="Registrar nuevo cliente", font=("Arial", 12, "bold"), bg="white")
+frame_entrada_clientes.pack(fill=tk.X, padx=10, pady=10)
+
+tk.Label(frame_entrada_clientes, text="Cédula:", font=("Arial", 10, "bold"), bg="white").pack(anchor=tk.W, padx=10, pady=(10, 0))
+entrada_cedula = tk.Entry(frame_entrada_clientes, font=("Arial", 10), width=40, relief=tk.FLAT, bd=2)
+entrada_cedula.pack(fill=tk.X, padx=10, pady=(0, 10))
+
+tk.Label(frame_entrada_clientes, text="Nombre completo:", font=("Arial", 10, "bold"), bg="white").pack(anchor=tk.W, padx=10, pady=(0, 0))
+entrada_nombre = tk.Entry(frame_entrada_clientes, font=("Arial", 10), width=40, relief=tk.FLAT, bd=2)
+entrada_nombre.pack(fill=tk.X, padx=10, pady=(0, 10))
+
+tk.Label(frame_entrada_clientes, text="Correo electrónico:", font=("Arial", 10, "bold"), bg="white").pack(anchor=tk.W, padx=10, pady=(0, 0))
+entrada_correo = tk.Entry(frame_entrada_clientes, font=("Arial", 10), width=40, relief=tk.FLAT, bd=2)
+entrada_correo.pack(fill=tk.X, padx=10, pady=(0, 10))
+
+boton_registrar = tk.Button(frame_entrada_clientes, text="✓ REGISTRAR CLIENTE", command=registrar_cliente, bg=COLOR_BOTON, fg=COLOR_TEXTO, font=("Arial", 10, "bold"), relief=tk.FLAT, padx=20, pady=10)
+boton_registrar.pack(fill=tk.X, padx=10, pady=(0, 10))
+
+frame_tabla_clientes = tk.LabelFrame(frame_clientes, text="Clientes registrados", font=("Arial", 12, "bold"), bg="white")
+frame_tabla_clientes.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+
+columnas_clientes = ("ID", "Cédula", "Nombre", "Correo")
+tabla_clientes = ttk.Treeview(frame_tabla_clientes, columns=columnas_clientes, height=15)
+tabla_clientes.column("#0", width=0, stretch=tk.NO)
+tabla_clientes.column("ID", anchor=tk.CENTER, width=50)
+tabla_clientes.column("Cédula", anchor=tk.CENTER, width=100)
+tabla_clientes.column("Nombre", anchor=tk.W, width=200)
+tabla_clientes.column("Correo", anchor=tk.W, width=250)
+
+tabla_clientes.heading("#0", text="", anchor=tk.W)
+tabla_clientes.heading("ID", text="ID", anchor=tk.CENTER)
+tabla_clientes.heading("Cédula", text="Cédula", anchor=tk.CENTER)
+tabla_clientes.heading("Nombre", text="Nombre", anchor=tk.W)
+tabla_clientes.heading("Correo", text="Correo", anchor=tk.W)
+
+tabla_clientes.pack(fill=tk.BOTH, expand=True)
+
+# ============= PESTAÑA 2: GESTIÓN DE RESERVAS =============
+frame_reservas = ttk.Frame(notebook)
+notebook.add(frame_reservas, text="🎫 Gestión de Reservas")
+
+frame_config_servicio = tk.LabelFrame(frame_reservas, text="Configurar servicio", font=("Arial", 12, "bold"), bg="white")
+frame_config_servicio.pack(fill=tk.X, padx=10, pady=10)
+
+tk.Label(frame_config_servicio, text="Tipo de servicio:", font=("Arial", 10, "bold"), bg="white").pack(anchor=tk.W, padx=10, pady=(10, 0))
+servicio_tipo = tk.StringVar(value="Reserva Sala")
+combo_tipo = ttk.Combobox(frame_config_servicio, textvariable=servicio_tipo, values=["Reserva Sala", "Alquiler Equipo", "Asesoría Especializada"], state="readonly", width=30)
+combo_tipo.pack(fill=tk.X, padx=10, pady=(0, 10))
+combo_tipo.bind("<<ComboboxSelected>>", lambda _: actualizar_formulario_servicio())
+
+tk.Label(frame_config_servicio, text="Nombre:", font=("Arial", 10, "bold"), bg="white").pack(anchor=tk.W, padx=10)
+entrada_nombre_servicio = tk.Entry(frame_config_servicio, font=("Arial", 10), width=40, relief=tk.FLAT, bd=2)
+entrada_nombre_servicio.pack(fill=tk.X, padx=10, pady=(0, 10))
+entrada_nombre_servicio.insert(0, "Sala VIP")
+
+tk.Label(frame_config_servicio, text="Precio base ($):", font=("Arial", 10, "bold"), bg="white").pack(anchor=tk.W, padx=10)
+entrada_precio_servicio = tk.Entry(frame_config_servicio, font=("Arial", 10), width=40, relief=tk.FLAT, bd=2)
+entrada_precio_servicio.pack(fill=tk.X, padx=10, pady=(0, 10))
+entrada_precio_servicio.insert(0, "50000")
+
+label_duracion_servicio = tk.Label(frame_config_servicio, text="Duración (horas):", font=("Arial", 10, "bold"), bg="white")
+label_duracion_servicio.pack(anchor=tk.W, padx=10)
+entrada_duracion_servicio = tk.Entry(frame_config_servicio, font=("Arial", 10), width=40, relief=tk.FLAT, bd=2)
+entrada_duracion_servicio.pack(fill=tk.X, padx=10, pady=(0, 10))
+entrada_duracion_servicio.insert(0, "1")
+
+label_especialista = tk.Label(frame_config_servicio, text="Especialista:", font=("Arial", 10, "bold"), bg="white")
+entrada_especialista = tk.Entry(frame_config_servicio, font=("Arial", 10), width=40, relief=tk.FLAT, bd=2)
+entrada_especialista.insert(0, "Carlos")
+
+boton_crear_servicio = tk.Button(frame_config_servicio, text="✅ Crear servicio activo", command=crear_servicio, bg=COLOR_EXITO, fg=COLOR_TEXTO, font=("Arial", 10, "bold"), relief=tk.FLAT, padx=20, pady=10)
+boton_crear_servicio.pack(fill=tk.X, padx=10, pady=(0, 10))
+
+frame_nueva_reserva = tk.LabelFrame(frame_reservas, text="Crear nueva reserva", font=("Arial", 12, "bold"), bg="white")
+frame_nueva_reserva.pack(fill=tk.X, padx=10, pady=10)
+
+tk.Label(frame_nueva_reserva, text="Seleccionar cliente:", font=("Arial", 10, "bold"), bg="white").pack(anchor=tk.W, padx=10, pady=(10, 0))
+combo_clientes = ttk.Combobox(frame_nueva_reserva, state="readonly", width=40)
+combo_clientes.pack(fill=tk.X, padx=10, pady=(0, 10))
+
+boton_reserva = tk.Button(frame_nueva_reserva, text="🎫 REALIZAR RESERVA", command=hacer_reserva, bg=COLOR_SECUNDARIO, fg=COLOR_TEXTO, font=("Arial", 10, "bold"), relief=tk.FLAT, padx=20, pady=10)
+boton_reserva.pack(fill=tk.X, padx=10, pady=(0, 10))
+
+frame_tabla_reservas = tk.LabelFrame(frame_reservas, text="Reservas confirmadas", font=("Arial", 12, "bold"), bg="white")
+frame_tabla_reservas.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+
+columnas_reservas = ("#", "Cédula", "Cliente", "Servicio", "Duración", "Costo Total", "Estado")
+tabla_reservas = ttk.Treeview(frame_tabla_reservas, columns=columnas_reservas, height=12)
+tabla_reservas.column("#0", width=0, stretch=tk.NO)
+tabla_reservas.column("#", anchor=tk.CENTER, width=40)
+tabla_reservas.column("Cédula", anchor=tk.CENTER, width=90)
+tabla_reservas.column("Cliente", anchor=tk.W, width=120)
+tabla_reservas.column("Servicio", anchor=tk.W, width=120)
+tabla_reservas.column("Duración", anchor=tk.CENTER, width=80)
+tabla_reservas.column("Costo Total", anchor=tk.CENTER, width=100)
+tabla_reservas.column("Estado", anchor=tk.CENTER, width=90)
+
+tabla_reservas.heading("#0", text="", anchor=tk.W)
+tabla_reservas.heading("#", text="#", anchor=tk.CENTER)
+tabla_reservas.heading("Cédula", text="Cédula", anchor=tk.CENTER)
+tabla_reservas.heading("Cliente", text="Cliente", anchor=tk.W)
+tabla_reservas.heading("Servicio", text="Servicio", anchor=tk.W)
+tabla_reservas.heading("Duración", text="Duración", anchor=tk.CENTER)
+tabla_reservas.heading("Costo Total", text="Costo Total", anchor=tk.CENTER)
+tabla_reservas.heading("Estado", text="Estado", anchor=tk.CENTER)
+
+tabla_reservas.pack(fill=tk.BOTH, expand=True)
+
+frame_botones_reservas = tk.Frame(frame_reservas, bg="#f0f0f0")
+frame_botones_reservas.pack(fill=tk.X, padx=10, pady=10)
+
+boton_editar = tk.Button(frame_botones_reservas, text="✏️ Editar", command=editar_reserva_seleccionada, bg="#ffc107", fg="#000", font=("Arial", 10, "bold"), relief=tk.FLAT, padx=15, pady=8)
+boton_editar.pack(side=tk.LEFT, padx=5)
+
+boton_eliminar = tk.Button(frame_botones_reservas, text="🗑️ Eliminar", command=eliminar_reserva_seleccionada, bg=COLOR_ERROR, fg=COLOR_TEXTO, font=("Arial", 10, "bold"), relief=tk.FLAT, padx=15, pady=8)
+boton_eliminar.pack(side=tk.LEFT, padx=5)
+
+# ============= PESTAÑA 3: BÚSQUEDA =============
+frame_busqueda = ttk.Frame(notebook)
+notebook.add(frame_busqueda, text="🔍 Búsqueda de Clientes")
+
+frame_busqueda_clientes = tk.LabelFrame(frame_busqueda, text="Buscar cliente por cédula", font=("Arial", 12, "bold"), bg="white")
+frame_busqueda_clientes.pack(fill=tk.X, padx=10, pady=10)
+
+tk.Label(frame_busqueda_clientes, text="Ingresa la cédula:", font=("Arial", 10, "bold"), bg="white").pack(anchor=tk.W, padx=10, pady=(10, 0))
+entrada_busqueda_cedula = tk.Entry(frame_busqueda_clientes, font=("Arial", 10), width=40, relief=tk.FLAT, bd=2)
+entrada_busqueda_cedula.pack(fill=tk.X, padx=10, pady=(0, 10))
+
+boton_buscar = tk.Button(frame_busqueda_clientes, text="🔍 BUSCAR", command=buscar_cliente_por_cedula, bg=COLOR_BOTON, fg=COLOR_TEXTO, font=("Arial", 10, "bold"), relief=tk.FLAT, padx=20, pady=10)
+boton_buscar.pack(fill=tk.X, padx=10, pady=(0, 10))
+
+# ============= INFORMACIÓN DEL SERVICIO ACTIVO =============
+frame_servicio = tk.Frame(ventana, bg="#e8f4f8", relief=tk.FLAT, bd=1)
+frame_servicio.pack(fill=tk.X, padx=5, pady=5)
+
+info_servicio = tk.Label(frame_servicio, text="", font=("Arial", 9), bg="#e8f4f8", fg=COLOR_SECUNDARIO)
+info_servicio.pack(padx=10, pady=10)
+
+actualizar_formulario_servicio()
+actualizar_info_servicio()
+
+# Inicia el bucle principal
 ventana.mainloop()
