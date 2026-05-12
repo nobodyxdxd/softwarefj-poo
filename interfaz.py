@@ -25,7 +25,7 @@ COLOR_BOTON_HOVER = "#0088b8"
 COLOR_EXITO = "#28a745"
 COLOR_ERROR = "#dc3545"
 
-
+#Apartado para registrar clientes, con validaciones de campos.
 def registrar_cliente():
     """Registra un cliente con cédula, nombre y correo."""
     cedula = entrada_cedula.get().strip()
@@ -64,6 +64,8 @@ def registrar_cliente():
         messagebox.showerror("Error de validación", str(e))
 
 
+
+#Apartado para actualizar la tabla de clientes cada vez que se registre un nuevo cliente o se realice una búsqueda.
 def actualizar_tabla_clientes():
     """Actualiza la tabla de clientes con estilo similar a Excel."""
     for item in tabla_clientes.get_children():
@@ -80,6 +82,7 @@ def actualizar_tabla_clientes():
     actualizar_dropdown_clientes()
 
 
+#Apartado para actualizar el menú desplegable de clientes.
 def actualizar_dropdown_clientes():
 
     valores = [
@@ -98,7 +101,9 @@ def actualizar_dropdown_clientes():
         combo_clientes_comentario.current(0)
 
 
-def buscar_cliente_por_cedula():
+
+#Apartado para buscar un cliente por cédula, mostrando su información y reservas asociadas.
+def buscar_cliente_por_cedula(): 
     """Busca un cliente por cédula."""
     cedula_busqueda = entrada_busqueda_cedula.get().strip()
 
@@ -130,7 +135,9 @@ def buscar_cliente_por_cedula():
     messagebox.showinfo("Resultado de búsqueda", info_resultado)
 
 
-def hacer_reserva():
+
+#Apartado para realizar una reserva, con validaciones de selección de cliente y servicio activo.
+def hacer_reserva(): 
     """Crea y confirma una reserva."""
     seleccion = combo_clientes.get()
 
@@ -172,7 +179,9 @@ def hacer_reserva():
         messagebox.showerror("Error en la Reserva", str(e))
 
 
-def actualizar_tabla_reservas():
+
+#Apartado para actualizar la tabla de reservas, mostrando información detallada de cada reserva y su estado actual.
+def actualizar_tabla_reservas(): #
     """Actualiza la tabla de reservas."""
     for item in tabla_reservas.get_children():
         tabla_reservas.delete(item)
@@ -189,7 +198,9 @@ def actualizar_tabla_reservas():
         ))
 
 
-def eliminar_reserva_seleccionada():
+
+#Apartado para eliminar una reserva seleccionada de la tabla, con validación de selección.
+def eliminar_reserva_seleccionada(): 
     """Elimina la reserva seleccionada de la tabla."""
     seleccion = tabla_reservas.selection()
 
@@ -206,6 +217,8 @@ def eliminar_reserva_seleccionada():
         actualizar_tabla_reservas()
 
 
+
+#Apartado para editar el estado de una reserva seleccionada, mostrando un diálogo con opciones de estado.
 def editar_reserva_seleccionada():
     """Abre un diálogo para editar el estado de una reserva."""
     seleccion = tabla_reservas.selection()
@@ -245,6 +258,8 @@ def editar_reserva_seleccionada():
         tk.Button(ventana_edicion, text="Guardar", command=guardar_edicion, bg=COLOR_EXITO, fg=COLOR_TEXTO, font=("Arial", 10, "bold"), relief=tk.FLAT, padx=20, pady=10).pack(pady=10)
 
 
+
+#Apartado para actualizar el formulario de creación de servicios según el tipo de servicio seleccionado, mostrando u ocultando campos específicos.
 def actualizar_formulario_servicio():
     """Actualiza el formulario según el tipo de servicio seleccionado."""
     tipo = servicio_tipo.get()
@@ -276,6 +291,8 @@ def actualizar_formulario_servicio():
             entrada_duracion_servicio.insert(0, "3")
 
 
+
+#Apartado para crear un servicio activo dinámico según el tipo seleccionado, con validaciones de campos y actualización de la información del servicio activo.
 def crear_servicio():
     """Crea un servicio activo dinámico."""
     tipo = servicio_tipo.get()
@@ -320,6 +337,9 @@ def actualizar_info_servicio():
         )
     )
 
+
+
+#Apartado para agregar un comentario, asociado a un cliente seleccionado.
 def agregar_comentario():
 
     cliente = combo_clientes_comentario.get()
@@ -350,6 +370,10 @@ def agregar_comentario():
         "Éxito",
         "Comentario agregado correctamente"
     )
+
+
+
+    
 # Configuración de la ventana principal
 ventana = tk.Tk()
 ventana.title("Sistema de Gestión de Reservas - Software FJ")
@@ -400,6 +424,9 @@ tabla_clientes.heading("Nombre", text="Nombre", anchor=tk.W)
 tabla_clientes.heading("Correo", text="Correo", anchor=tk.W)
 
 tabla_clientes.pack(fill=tk.BOTH, expand=True)
+
+
+
 
 # ============= PESTAÑA 2: GESTIÓN DE RESERVAS =============
 frame_reservas = ttk.Frame(notebook)
@@ -495,6 +522,9 @@ entrada_busqueda_cedula.pack(fill=tk.X, padx=10, pady=(0, 10))
 boton_buscar = tk.Button(frame_busqueda_clientes, text="🔍 BUSCAR", command=buscar_cliente_por_cedula, bg=COLOR_BOTON, fg=COLOR_TEXTO, font=("Arial", 10, "bold"), relief=tk.FLAT, padx=20, pady=10)
 boton_buscar.pack(fill=tk.X, padx=10, pady=(0, 10))
 
+
+
+
 # ============= PESTAÑA 4: COMENTARIOS =============
 
 frame_comentarios = ttk.Frame(notebook)
@@ -570,6 +600,8 @@ lista_comentarios.pack(
     pady=10
 )
 
+
+
 # ============= INFORMACIÓN DEL SERVICIO ACTIVO =============
 frame_servicio = tk.Frame(ventana, bg="#e8f4f8", relief=tk.FLAT, bd=1)
 frame_servicio.pack(fill=tk.X, padx=5, pady=5)
@@ -582,4 +614,3 @@ actualizar_info_servicio()
 
 # Inicia el bucle principal
 ventana.mainloop()
-
