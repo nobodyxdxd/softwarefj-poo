@@ -33,13 +33,12 @@ def registrar_cliente():
 
     # NUEVO: Verificar si el cliente ya existe (mismo nombre Y correo)
     for cliente_existente in clientes:
-        if cliente_existente.get_nombre().lower() == nombre.lower() and \
-           cliente_existente.get_correo().lower() == correo.lower():
+        if cliente_existente.get_nombre().lower() == nombre.lower():
             messagebox.showerror(
                 "Error",
-                f"El cliente {nombre} ya está registrado"
-            )
-            return
+                f"El cliente '{nombre}' ya está registrado"
+        )
+        return
 
     # Validar el cliente y capturar errores de validación
     try:
@@ -328,9 +327,9 @@ frame_info_clientes.pack(fill=tk.BOTH, expand=True, pady=10)
 
 info_clientes = scrolledtext.ScrolledText(
     frame_info_clientes,
-    font=("Arial", 9),
-    height=4,
-    width=50,
+    font=("Arial", 10),
+    height=10,
+    width=65,
     bg="#f9f9f9",
     fg=COLOR_HEADER,
     relief=tk.FLAT,
@@ -410,9 +409,9 @@ frame_info_reservas.pack(fill=tk.BOTH, expand=True, pady=10)
 
 info_reservas = scrolledtext.ScrolledText(
     frame_info_reservas,
-    font=("Arial", 9),
-    height=4,
-    width=50,
+    font=("Arial", 10),
+    height=10,
+    width=65,
     bg="#f9f9f9",
     fg=COLOR_HEADER,
     relief=tk.FLAT,
