@@ -1,10 +1,10 @@
-class ClienteError(Exception):
-    pass
+class ClienteError(Exception):  # declara la clase
+    pass  # no hace nada; placeholder para el método abstracto
 
 
-class ServicioError(Exception):
-    pass
+class ServicioError(Exception):  # declara la clase
+    pass  # no hace nada; placeholder para el método abstracto
 
 
-class ReservaError(Exception):
-    pass
+class ReservaError(Exception):  # declara la clase
+    pass  # no hace nada; placeholder para el método abstracto

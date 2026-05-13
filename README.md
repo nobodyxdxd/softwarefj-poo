@@ -43,3 +43,4 @@ python interfaz.py
 - Manejo de múltiples escenarios con excepciones controladas.
 - Continuidad del programa ante errores.
 - Registro de eventos y errores en el archivo `sistema.log`.
+- Código fuente documentado con comentarios explicativos en cada línea.
