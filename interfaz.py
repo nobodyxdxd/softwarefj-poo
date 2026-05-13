@@ -16,14 +16,25 @@ comentarios = []
 servicio_actual = ReservaSala("Sala VIP", 50000, 1)
 
 # Colores
-COLOR_HEADER = "#1e3c72"
-COLOR_SECUNDARIO = "#2a5298"
-COLOR_ACENTO = "#00d4ff"
-COLOR_TEXTO = "#ffffff"
-COLOR_BOTON = "#00a8e8"
-COLOR_BOTON_HOVER = "#0088b8"
-COLOR_EXITO = "#28a745"
-COLOR_ERROR = "#dc3545"
+COLOR_FONDO = "#151a2e"
+COLOR_HEADER = "#1b2440"
+COLOR_SECUNDARIO = "#2b3a67"
+COLOR_ACENTO = "#8be9fd"
+COLOR_BOTON = "#4b6cb7"
+COLOR_BOTON_HOVER = "#5c7cfa"
+COLOR_EXITO = "#7bd88f"
+COLOR_ERROR = "#ff6b81"
+COLOR_TEXTO = "#f4f7ff"
+COLOR_CARD = "#222b45"
+COLOR_INPUT = "#364269"
+COLOR_BORDER = "#3d4c72"
+
+# Hover botones
+def on_enter(e):
+    e.widget['background'] = COLOR_BOTON_HOVER
+
+def on_leave(e):
+    e.widget['background'] = COLOR_BOTON
 
 #Apartado para registrar clientes, con validaciones de campos.
 def registrar_cliente():
@@ -234,12 +245,12 @@ def editar_reserva_seleccionada():
         ventana_edicion = tk.Toplevel(ventana)
         ventana_edicion.title("Editar Estado de Reserva")
         ventana_edicion.geometry("400x200")
-        ventana_edicion.configure(bg="#f0f0f0")
+        ventana_edicion.configure(bg=COLOR_FONDO)
 
-        tk.Label(ventana_edicion, text="Estado Actual:", font=("Arial", 10, "bold"), bg="#f0f0f0").pack(pady=5)
-        tk.Label(ventana_edicion, text=reserva.estado, font=("Arial", 10), bg="#e8f4f8", relief=tk.FLAT, pady=5).pack(fill=tk.X, padx=20)
+        tk.Label(ventana_edicion, text="Estado Actual:", font=("Arial", 10, "bold"), bg=COLOR_FONDO, fg=COLOR_TEXTO).pack(pady=5)
+        tk.Label(ventana_edicion, text=reserva.estado, font=("Arial", 10), bg=COLOR_CARD, fg=COLOR_TEXTO, relief=tk.FLAT, pady=5).pack(fill=tk.X, padx=20)
 
-        tk.Label(ventana_edicion, text="Nuevo Estado:", font=("Arial", 10, "bold"), bg="#f0f0f0").pack(pady=5)
+        tk.Label(ventana_edicion, text="Nuevo Estado:", font=("Arial", 10, "bold"), bg=COLOR_FONDO, fg=COLOR_TEXTO).pack(pady=5)
 
         variable_estado = tk.StringVar(value=reserva.estado)
         combo_estado = ttk.Combobox(ventana_edicion, textvariable=variable_estado, values=["Pendiente", "Confirmada", "Cancelada"], state="readonly", width=30)
@@ -378,7 +389,21 @@ def agregar_comentario():
 ventana = tk.Tk()
 ventana.title("Sistema de Gestión de Reservas - Software FJ")
 ventana.geometry("1200x800")
-ventana.configure(bg="#f0f0f0")
+ventana.configure(bg=COLOR_FONDO)
+
+style = ttk.Style()
+style.theme_use("clam")
+style.configure("TNotebook",background=COLOR_FONDO,borderwidth=0)
+style.configure("TNotebook.Tab",background=COLOR_SECUNDARIO,foreground=COLOR_TEXTO,padding=[15, 10],font=("Arial", 10, "bold"))
+style.map("TNotebook.Tab",background=[("selected", COLOR_BOTON)],foreground=[("selected", COLOR_TEXTO)])
+style.configure("Treeview",background=COLOR_CARD,foreground=COLOR_TEXTO,rowheight=28,fieldbackground=COLOR_CARD,bordercolor=COLOR_BORDER,font=("Arial", 10))
+style.configure("Treeview.Heading",background=COLOR_HEADER,foreground=COLOR_ACENTO,font=("Arial", 10, "bold"))
+style.map("Treeview",background=[("selected", COLOR_BOTON)])
+style.configure("TCombobox",padding=5,font=("Arial", 10))
+
+titulo = tk.Label(ventana,text="Sistema de Gestión de Reservas",font=("Arial", 20, "bold"),bg=COLOR_HEADER,fg=COLOR_ACENTO,pady=15)
+
+titulo.pack(fill=tk.X)
 
 # Notebook para pestañas
 notebook = ttk.Notebook(ventana)
@@ -388,25 +413,27 @@ notebook.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
 frame_clientes = ttk.Frame(notebook)
 notebook.add(frame_clientes, text="📝 Registro de Clientes")
 
-frame_entrada_clientes = tk.LabelFrame(frame_clientes, text="Registrar nuevo cliente", font=("Arial", 12, "bold"), bg="white")
+frame_entrada_clientes = tk.LabelFrame(frame_clientes, text="Registrar nuevo cliente", font=("Arial", 12, "bold"), bg=COLOR_CARD, fg=COLOR_TEXTO)
 frame_entrada_clientes.pack(fill=tk.X, padx=10, pady=10)
 
-tk.Label(frame_entrada_clientes, text="Cédula:", font=("Arial", 10, "bold"), bg="white").pack(anchor=tk.W, padx=10, pady=(10, 0))
-entrada_cedula = tk.Entry(frame_entrada_clientes, font=("Arial", 10), width=40, relief=tk.FLAT, bd=2)
+tk.Label(frame_entrada_clientes, text="Cédula:", font=("Arial", 10, "bold"), bg=COLOR_CARD, fg=COLOR_TEXTO).pack(anchor=tk.W, padx=10, pady=(10, 0))
+entrada_cedula = tk.Entry(frame_entrada_clientes,font=("Arial", 10),width=40,relief=tk.FLAT,bd=2,bg=COLOR_INPUT,fg=COLOR_TEXTO,insertbackground=COLOR_TEXTO)
 entrada_cedula.pack(fill=tk.X, padx=10, pady=(0, 10))
 
-tk.Label(frame_entrada_clientes, text="Nombre completo:", font=("Arial", 10, "bold"), bg="white").pack(anchor=tk.W, padx=10, pady=(0, 0))
-entrada_nombre = tk.Entry(frame_entrada_clientes, font=("Arial", 10), width=40, relief=tk.FLAT, bd=2)
+tk.Label(frame_entrada_clientes, text="Nombre completo:", font=("Arial", 10, "bold"), bg=COLOR_CARD, fg=COLOR_TEXTO).pack(anchor=tk.W, padx=10, pady=(0, 0))
+entrada_nombre = tk.Entry(frame_entrada_clientes,font=("Arial", 10),width=40,relief=tk.FLAT,bd=2,bg=COLOR_INPUT,fg=COLOR_TEXTO,insertbackground=COLOR_TEXTO)
 entrada_nombre.pack(fill=tk.X, padx=10, pady=(0, 10))
 
-tk.Label(frame_entrada_clientes, text="Correo electrónico:", font=("Arial", 10, "bold"), bg="white").pack(anchor=tk.W, padx=10, pady=(0, 0))
-entrada_correo = tk.Entry(frame_entrada_clientes, font=("Arial", 10), width=40, relief=tk.FLAT, bd=2)
+tk.Label(frame_entrada_clientes, text="Correo electrónico:", font=("Arial", 10, "bold"), bg=COLOR_CARD, fg=COLOR_TEXTO).pack(anchor=tk.W, padx=10, pady=(0, 0))
+entrada_correo = tk.Entry(frame_entrada_clientes,font=("Arial", 10),width=40,relief=tk.FLAT,bd=2,bg=COLOR_INPUT,fg=COLOR_TEXTO,insertbackground=COLOR_TEXTO)
 entrada_correo.pack(fill=tk.X, padx=10, pady=(0, 10))
 
 boton_registrar = tk.Button(frame_entrada_clientes, text="✓ REGISTRAR CLIENTE", command=registrar_cliente, bg=COLOR_BOTON, fg=COLOR_TEXTO, font=("Arial", 10, "bold"), relief=tk.FLAT, padx=20, pady=10)
 boton_registrar.pack(fill=tk.X, padx=10, pady=(0, 10))
+boton_registrar.bind("<Enter>", on_enter)
+boton_registrar.bind("<Leave>", on_leave)
 
-frame_tabla_clientes = tk.LabelFrame(frame_clientes, text="Clientes registrados", font=("Arial", 12, "bold"), bg="white")
+frame_tabla_clientes = tk.LabelFrame(frame_clientes, text="Clientes registrados", font=("Arial", 12, "bold"), bg=COLOR_CARD, fg=COLOR_TEXTO)
 frame_tabla_clientes.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
 
 columnas_clientes = ("ID", "Cédula", "Nombre", "Correo")
@@ -432,49 +459,53 @@ tabla_clientes.pack(fill=tk.BOTH, expand=True)
 frame_reservas = ttk.Frame(notebook)
 notebook.add(frame_reservas, text="🎫 Gestión de Reservas")
 
-frame_config_servicio = tk.LabelFrame(frame_reservas, text="Configurar servicio", font=("Arial", 12, "bold"), bg="white")
+frame_config_servicio = tk.LabelFrame(frame_reservas, text="Configurar servicio", font=("Arial", 12, "bold"), bg=COLOR_CARD, fg=COLOR_TEXTO)
 frame_config_servicio.pack(fill=tk.X, padx=10, pady=10)
 
-tk.Label(frame_config_servicio, text="Tipo de servicio:", font=("Arial", 10, "bold"), bg="white").pack(anchor=tk.W, padx=10, pady=(10, 0))
+tk.Label(frame_config_servicio, text="Tipo de servicio:", font=("Arial", 10, "bold"), bg=COLOR_CARD, fg=COLOR_TEXTO).pack(anchor=tk.W, padx=10, pady=(10, 0))
 servicio_tipo = tk.StringVar(value="Reserva Sala")
 combo_tipo = ttk.Combobox(frame_config_servicio, textvariable=servicio_tipo, values=["Reserva Sala", "Alquiler Equipo", "Asesoría Especializada"], state="readonly", width=30)
 combo_tipo.pack(fill=tk.X, padx=10, pady=(0, 10))
 combo_tipo.bind("<<ComboboxSelected>>", lambda _: actualizar_formulario_servicio())
 
-tk.Label(frame_config_servicio, text="Nombre:", font=("Arial", 10, "bold"), bg="white").pack(anchor=tk.W, padx=10)
-entrada_nombre_servicio = tk.Entry(frame_config_servicio, font=("Arial", 10), width=40, relief=tk.FLAT, bd=2)
+tk.Label(frame_config_servicio, text="Nombre:", font=("Arial", 10, "bold"), bg=COLOR_CARD, fg=COLOR_TEXTO).pack(anchor=tk.W, padx=10)
+entrada_nombre_servicio = tk.Entry(frame_config_servicio,font=("Arial", 10),width=40,relief=tk.FLAT,bd=2,bg=COLOR_INPUT,fg=COLOR_TEXTO,insertbackground=COLOR_TEXTO)
 entrada_nombre_servicio.pack(fill=tk.X, padx=10, pady=(0, 10))
 entrada_nombre_servicio.insert(0, "Sala VIP")
 
-tk.Label(frame_config_servicio, text="Precio base ($):", font=("Arial", 10, "bold"), bg="white").pack(anchor=tk.W, padx=10)
-entrada_precio_servicio = tk.Entry(frame_config_servicio, font=("Arial", 10), width=40, relief=tk.FLAT, bd=2)
+tk.Label(frame_config_servicio, text="Precio base ($):", font=("Arial", 10, "bold"), bg=COLOR_CARD, fg=COLOR_TEXTO).pack(anchor=tk.W, padx=10)
+entrada_precio_servicio = tk.Entry(frame_config_servicio,font=("Arial", 10),width=40,relief=tk.FLAT,bd=2,bg=COLOR_INPUT,fg=COLOR_TEXTO,insertbackground=COLOR_TEXTO)
 entrada_precio_servicio.pack(fill=tk.X, padx=10, pady=(0, 10))
 entrada_precio_servicio.insert(0, "50000")
 
-label_duracion_servicio = tk.Label(frame_config_servicio, text="Duración (horas):", font=("Arial", 10, "bold"), bg="white")
+label_duracion_servicio = tk.Label(frame_config_servicio, text="Duración (horas):", font=("Arial", 10, "bold"), bg=COLOR_CARD, fg=COLOR_TEXTO)
 label_duracion_servicio.pack(anchor=tk.W, padx=10)
-entrada_duracion_servicio = tk.Entry(frame_config_servicio, font=("Arial", 10), width=40, relief=tk.FLAT, bd=2)
+entrada_duracion_servicio = tk.Entry(frame_config_servicio,font=("Arial", 10),width=40,relief=tk.FLAT,bd=2,bg=COLOR_INPUT,fg=COLOR_TEXTO,insertbackground=COLOR_TEXTO)
 entrada_duracion_servicio.pack(fill=tk.X, padx=10, pady=(0, 10))
 entrada_duracion_servicio.insert(0, "1")
 
-label_especialista = tk.Label(frame_config_servicio, text="Especialista:", font=("Arial", 10, "bold"), bg="white")
-entrada_especialista = tk.Entry(frame_config_servicio, font=("Arial", 10), width=40, relief=tk.FLAT, bd=2)
+label_especialista = tk.Label(frame_config_servicio, text="Especialista:", font=("Arial", 10, "bold"), bg=COLOR_CARD, fg=COLOR_TEXTO)
+entrada_especialista = tk.Entry(frame_config_servicio,font=("Arial", 10),width=40,relief=tk.FLAT,bd=2,bg=COLOR_INPUT,fg=COLOR_TEXTO,insertbackground=COLOR_TEXTO)
 entrada_especialista.insert(0, "Carlos")
 
 boton_crear_servicio = tk.Button(frame_config_servicio, text="✅ Crear servicio activo", command=crear_servicio, bg=COLOR_EXITO, fg=COLOR_TEXTO, font=("Arial", 10, "bold"), relief=tk.FLAT, padx=20, pady=10)
 boton_crear_servicio.pack(fill=tk.X, padx=10, pady=(0, 10))
+boton_crear_servicio.bind("<Enter>", on_enter)
+boton_crear_servicio.bind("<Leave>", on_leave)
 
-frame_nueva_reserva = tk.LabelFrame(frame_reservas, text="Crear nueva reserva", font=("Arial", 12, "bold"), bg="white")
+frame_nueva_reserva = tk.LabelFrame(frame_reservas, text="Crear nueva reserva", font=("Arial", 12, "bold"), bg=COLOR_CARD, fg=COLOR_TEXTO)
 frame_nueva_reserva.pack(fill=tk.X, padx=10, pady=10)
 
-tk.Label(frame_nueva_reserva, text="Seleccionar cliente:", font=("Arial", 10, "bold"), bg="white").pack(anchor=tk.W, padx=10, pady=(10, 0))
+tk.Label(frame_nueva_reserva, text="Seleccionar cliente:", font=("Arial", 10, "bold"), bg=COLOR_CARD, fg=COLOR_TEXTO).pack(anchor=tk.W, padx=10, pady=(10, 0))
 combo_clientes = ttk.Combobox(frame_nueva_reserva, state="readonly", width=40)
 combo_clientes.pack(fill=tk.X, padx=10, pady=(0, 10))
 
 boton_reserva = tk.Button(frame_nueva_reserva, text="🎫 REALIZAR RESERVA", command=hacer_reserva, bg=COLOR_SECUNDARIO, fg=COLOR_TEXTO, font=("Arial", 10, "bold"), relief=tk.FLAT, padx=20, pady=10)
 boton_reserva.pack(fill=tk.X, padx=10, pady=(0, 10))
+boton_reserva.bind("<Enter>", on_enter)
+boton_reserva.bind("<Leave>", on_leave)
 
-frame_tabla_reservas = tk.LabelFrame(frame_reservas, text="Reservas confirmadas", font=("Arial", 12, "bold"), bg="white")
+frame_tabla_reservas = tk.LabelFrame(frame_reservas, text="Reservas confirmadas", font=("Arial", 12, "bold"), bg=COLOR_CARD, fg=COLOR_TEXTO)
 frame_tabla_reservas.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
 
 columnas_reservas = ("#", "Cédula", "Cliente", "Servicio", "Duración", "Costo Total", "Estado")
@@ -499,35 +530,41 @@ tabla_reservas.heading("Estado", text="Estado", anchor=tk.CENTER)
 
 tabla_reservas.pack(fill=tk.BOTH, expand=True)
 
-frame_botones_reservas = tk.Frame(frame_reservas, bg="#f0f0f0")
+frame_botones_reservas = tk.Frame(frame_reservas, bg=COLOR_FONDO)
 frame_botones_reservas.pack(fill=tk.X, padx=10, pady=10)
 
 boton_editar = tk.Button(frame_botones_reservas, text="✏️ Editar", command=editar_reserva_seleccionada, bg="#ffc107", fg="#000", font=("Arial", 10, "bold"), relief=tk.FLAT, padx=15, pady=8)
 boton_editar.pack(side=tk.LEFT, padx=5)
+boton_editar.bind("<Enter>", on_enter)
+boton_editar.bind("<Leave>", on_leave)
 
 boton_eliminar = tk.Button(frame_botones_reservas, text="🗑️ Eliminar", command=eliminar_reserva_seleccionada, bg=COLOR_ERROR, fg=COLOR_TEXTO, font=("Arial", 10, "bold"), relief=tk.FLAT, padx=15, pady=8)
 boton_eliminar.pack(side=tk.LEFT, padx=5)
+boton_eliminar.bind("<Enter>", on_enter)
+boton_eliminar.bind("<Leave>", on_leave)
 
 # ============= PESTAÑA 3: BÚSQUEDA =============
 frame_busqueda = ttk.Frame(notebook)
 notebook.add(frame_busqueda, text="🔍 Búsqueda de Clientes")
 
-frame_busqueda_clientes = tk.LabelFrame(frame_busqueda, text="Buscar cliente por cédula", font=("Arial", 12, "bold"), bg="white")
+frame_busqueda_clientes = tk.LabelFrame(frame_busqueda, text="Buscar cliente por cédula", font=("Arial", 12, "bold"), bg=COLOR_CARD, fg=COLOR_TEXTO)
 frame_busqueda_clientes.pack(fill=tk.X, padx=10, pady=10)
 
-tk.Label(frame_busqueda_clientes, text="Ingresa la cédula:", font=("Arial", 10, "bold"), bg="white").pack(anchor=tk.W, padx=10, pady=(10, 0))
-entrada_busqueda_cedula = tk.Entry(frame_busqueda_clientes, font=("Arial", 10), width=40, relief=tk.FLAT, bd=2)
+tk.Label(frame_busqueda_clientes, text="Ingresa la cédula:", font=("Arial", 10, "bold"), bg=COLOR_CARD, fg=COLOR_TEXTO).pack(anchor=tk.W, padx=10, pady=(10, 0))
+entrada_busqueda_cedula = tk.Entry(frame_busqueda_clientes,font=("Arial", 10),width=40,relief=tk.FLAT,bd=2,bg=COLOR_INPUT,fg=COLOR_TEXTO,insertbackground=COLOR_TEXTO)
 entrada_busqueda_cedula.pack(fill=tk.X, padx=10, pady=(0, 10))
 
 boton_buscar = tk.Button(frame_busqueda_clientes, text="🔍 BUSCAR", command=buscar_cliente_por_cedula, bg=COLOR_BOTON, fg=COLOR_TEXTO, font=("Arial", 10, "bold"), relief=tk.FLAT, padx=20, pady=10)
 boton_buscar.pack(fill=tk.X, padx=10, pady=(0, 10))
+boton_buscar.bind("<Enter>", on_enter)
+boton_buscar.bind("<Leave>", on_leave)
 
 
 
 
 # ============= PESTAÑA 4: COMENTARIOS =============
 
-frame_comentarios = ttk.Frame(notebook)
+frame_comentarios = tk.Frame(notebook, bg=COLOR_FONDO)
 
 notebook.add(
     frame_comentarios,
@@ -537,7 +574,9 @@ notebook.add(
 tk.Label(
     frame_comentarios,
     text="Seleccionar cliente:",
-    font=("Arial", 10, "bold")
+    font=("Arial", 10, "bold"),
+    bg=COLOR_CARD,
+    fg=COLOR_TEXTO
 ).pack(anchor=tk.W, padx=10, pady=(10, 0))
 
 combo_clientes_comentario = ttk.Combobox(
@@ -555,13 +594,20 @@ combo_clientes_comentario.pack(
 tk.Label(
     frame_comentarios,
     text="Comentario:",
-    font=("Arial", 10, "bold")
+    font=("Arial", 10, "bold"),
+    bg=COLOR_CARD,
+    fg=COLOR_TEXTO
 ).pack(anchor=tk.W, padx=10)
 
 caja_comentario = tk.Text(
     frame_comentarios,
     height=5,
-    font=("Arial", 10)
+    font=("Arial", 10),
+    bg=COLOR_INPUT,
+    fg=COLOR_TEXTO,
+    insertbackground=COLOR_TEXTO,
+    relief=tk.FLAT,
+    bd=2
 )
 
 caja_comentario.pack(
@@ -587,10 +633,17 @@ boton_comentario.pack(
     pady=(0, 10)
 )
 
+boton_comentario.bind("<Enter>", on_enter)
+boton_comentario.bind("<Leave>", on_leave)
+
 lista_comentarios = tk.Listbox(
     frame_comentarios,
     font=("Arial", 10),
-    height=10
+    height=10,
+    bg=COLOR_INPUT,
+    fg=COLOR_TEXTO,
+    relief=tk.FLAT,
+    bd=2
 )
 
 lista_comentarios.pack(
@@ -603,10 +656,10 @@ lista_comentarios.pack(
 
 
 # ============= INFORMACIÓN DEL SERVICIO ACTIVO =============
-frame_servicio = tk.Frame(ventana, bg="#e8f4f8", relief=tk.FLAT, bd=1)
+frame_servicio = tk.Frame(ventana,bg=COLOR_HEADER,relief=tk.FLAT,bd=1)
 frame_servicio.pack(fill=tk.X, padx=5, pady=5)
 
-info_servicio = tk.Label(frame_servicio, text="", font=("Arial", 9), bg="#e8f4f8", fg=COLOR_SECUNDARIO)
+info_servicio = tk.Label(frame_servicio,text="",font=("Arial", 9),bg=COLOR_HEADER,fg=COLOR_ACENTO)
 info_servicio.pack(padx=10, pady=10)
 
 actualizar_formulario_servicio()
